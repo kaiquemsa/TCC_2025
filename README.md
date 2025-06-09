@@ -45,28 +45,26 @@ Ao receber uma consulta do usuário, o sistema busca os documentos mais semelhan
 - PostgreSQL em funcionamento
 - Conta/configuração do Supabase
 - Chave de API para a Gemini LLM
+- Clone o repositório
 
 ### Backend
 
-1. Clone o repositório:
-   ```bash
-   git clone
-   cd tcc_2025/tcc_backend
+1. Instale as dependências:
+  ```bash
+  cd tcc_2025/tcc_backend
+  go mod tidy
+  ```
+2. Configure as variáveis de ambiente (.env) com as credenciais do banco, Supabase e Gemini.
 
-2. Instale as dependências:
-   ```bash
-   go mod tidy
-
-3. Configure as variáveis de ambiente (.env) com as credenciais do banco, Supabase e Gemini.
-
-4. Inicie o servidor:
-   ```bash
-   go run main.go
-
+3. Inicie o servidor:
+  ```bash
+  go run main.go
+  ```
 ### Frontend
 
 1. Instale as dependências:
   ```bash
+  cd tcc_2025/tcc_frontend
   npm install
   ```
 2. Inicie o servidor de desenvolvimento:
