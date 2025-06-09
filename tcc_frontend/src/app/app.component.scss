@@ -1,0 +1,123 @@
+@use '../styles/variables.scss' as *;
+
+.app-layout {
+  height: 100vh;
+  overflow: hidden;
+}
+
+._sidebar {
+  font-family: $font-family-base;
+  background-color: $sidebar-color;
+  width: 260px;
+  padding: 15px;
+  transition: width 0.3s cubic-bezier(.4,0,.2,1);
+  z-index: 20;
+}
+
+._sidebar._collapse {
+  width: 0px;
+  padding: 0px;
+}
+
+._items {
+  box-shadow: 0 1px 0 #ffffff0d;
+  padding-bottom: 18px;
+  padding-left: 6px;
+}
+
+.main-content {
+  flex: 1;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.btn-toggle-sidebar {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  z-index: 1050;
+  transition: left 0.4s ease-in-out;
+  margin-left: 6px;
+
+  &.collapsed {
+    left: 15px;
+  }
+}
+
+.chat-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 10px 24px;
+  background: #212327;
+  font-size: 16px;
+  z-index: 10;
+  box-shadow: 0 1px 0 #ffffff0d;
+}
+
+.chat-title {
+  font-weight: bold;
+}
+
+.chat-actions {
+  display: flex;
+}
+
+.chat-actions button {
+  margin-left: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 26px;
+  color: #fff;
+}
+.chat-actions button:hover {
+  color: #aeaeae;
+}
+
+._btn {
+  color: #fff;
+  width: 200px;
+  display: flex;
+  gap: 8px;
+  font-size: 18px;
+}
+._btn:hover {
+  background-color: #363636;
+}
+._btn:active {
+  background-color: #2f2f2f;
+}
+
+.hr-short {
+  width: 80%;
+  margin: 6px auto;
+  border: none;
+  border-top: 1px solid #e5e7eb;
+  border-radius: 999px;
+}
+
+._drop {
+  background-color: #363636;
+
+  button {
+    color: #fff;
+    font-size: 16px;
+  }
+  button:hover {
+    border-radius: 10px;
+    width: 90%;
+    margin: auto;
+    background-color: #444444;
+  }
+
+  ._drop_text {
+    color: #fff;
+    margin: 0px;
+  }
+}

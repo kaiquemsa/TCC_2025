@@ -1,0 +1,91 @@
+@use '../../../styles/variables.scss' as *;
+
+.chat-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.chat-center-wrapper {
+  width: 48rem;
+}
+
+.chat-main {
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-input {
+  display: flex;
+  gap: 10px;
+  background-color: transparent;
+  border: none;
+}
+
+.chat-input input {
+  flex: 1;
+  padding: 8px;
+}
+
+.chat-input-wrapper {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background-color: #404044;
+  border-radius: 15px;
+  border: 2px solid #494949;
+  margin-bottom: 1.5rem;
+}
+
+.chat-input {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  border-radius: 20px;
+  outline: none;
+  font-size: 1rem;
+  transition: border-color 0.3s ease;
+  color: #ffff;
+}
+
+.chat-send-btn {
+  border: none;
+  background: transparent;
+  color: white;
+  transition: background 0.3s ease;
+}
+
+.title h1 {
+  display: flex;
+  justify-content: center;
+  font-size: 28px;
+  transition: .25s transform linear(0,.00506 1.18%,.02044 2.46%,.08322 5.391%,.46561 17.652%,.63901 24.342%,.76663 31.093%,.85981 38.454%,.89862 42.934%,.92965 47.845%,.95366 53.305%,.97154 59.516%,.99189 74.867%,.9991), .2s opacity linear(0,.00506 1.18%,.02044 2.46%,.08322 5.391%,.46561 17.652%,.63901 24.342%,.76663 31.093%,.85981 38.454%,.89862 42.934%,.92965 47.845%,.95366 53.305%,.97154 59.516%,.99189 74.867%,.9991), .3s visibility linear(0,.00506 1.18%,.02044 2.46%,.08322 5.391%,.46561 17.652%,.63901 24.342%,.76663 31.093%,.85981 38.454%,.89862 42.934%,.92965 47.845%,.95366 53.305%,.97154 59.516%,.99189 74.867%,.9991);
+}
+
+.animate-out {
+  animation: slideDown 0.5s forwards;
+}
+
+@keyframes slideDown {
+  to {
+    transform: translateY(150px);
+    opacity: 0;
+  }
+}
+
+.chat-input-wrapper.animate-out {
+  transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s;
+  will-change: transform, opacity;
+  opacity: 0.85;
+}
+
+.chat-input-wrapper.animate-out {
+  opacity: 0;
+}
+
+.chat-input-wrapper.centered {
+  position: relative;
+  transition: transform 0.4s cubic-bezier(.4,0,.2,1);
+}

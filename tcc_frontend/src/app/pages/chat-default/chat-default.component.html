@@ -1,0 +1,25 @@
+<div class="chat-container">
+  <div class="chat-center-wrapper">
+    <div class="chat-main">
+      <div class="title mb-4">
+        <h1>Envie o que deseja para iniciar a interação!</h1>
+      </div>
+      <div
+        class="chat-input-wrapper centered"
+        #animatedWrapper
+      >
+        <input
+          type="text"
+          class="chat-input"
+          [(ngModel)]="messageText"
+          (keyup.enter)="generateChat(animatedWrapper)"
+          placeholder="Digite sua mensagem..."
+        />
+        <button class="chat-send-btn" (click)="generateChat(animatedWrapper)">
+          <i class="bi bi-arrow-up-circle-fill" style="font-size: 30px"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+2

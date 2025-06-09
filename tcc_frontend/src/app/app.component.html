@@ -1,0 +1,60 @@
+<div class="app-layout d-flex">
+  <button class="btn btn-toggle-sidebar btn-outline-light"
+      (click)="toggleSidebar()"
+      [ngClass]="{ 'collapsed': !isSidebarOpen }">
+    <i [ngClass]="isSidebarOpen ? 'bi bi-layout-sidebar-inset-reverse' : 'bi bi-layout-sidebar-inset'"></i>
+  </button>
+
+  <div [ngClass]="{'_sidebar': true, 'min-vh-100': true, '_collapse': !isSidebarOpen}">
+    <div class="_items row align-items-center justify-content-between mb-4" *ngIf="isSidebarOpen">
+      <div class="col-md-6 text-center text-md-start">
+        <button class="btn btn-outline-light" (click)="toggleSidebar()">
+          <i [ngClass]="isSidebarOpen ? 'bi bi-layout-sidebar-inset-reverse' : 'bi bi-layout-sidebar-inset'"></i>
+        </button>
+      </div>
+
+    </div>
+
+    <ul class="nav flex-column" *ngIf="isSidebarOpen">
+      <li class="nav-item">
+        <button class="btn _btn" title="Novo chat" [routerLink]="'/'"><i class="bi bi-pencil-square"></i> Novo chat</button>
+      </li>
+      <!-- <li class="nav-item">
+        <button class="btn _btn" title="Buscar"><i class="bi bi-search"></i> Buscar</button>
+      </li> -->
+    </ul>
+  </div>
+
+  <div class="chat-header">
+    <div class="chat-actions">
+      <!-- <button (click)="openSettings()" title="Configurações">
+        <i class="bi bi-three-dots-vertical"></i>
+      </button> -->
+
+
+      <div class="btn-group" dropdown>
+        <button id="button-animated"
+                dropdownToggle
+                type="button"
+                class="btn btn-primary dropdown-toggle"
+                aria-controls="dropdown-animated">
+            <i class="bi bi-person-circle"></i>
+        </button>
+        <ul id="dropdown-animated"
+            *dropdownMenu
+            class="dropdown-menu dropdown-menu-end _drop"
+            role="menu"
+            aria-labelledby="button-animated">
+          <li role="menuitem" style="justify-items: center;"><p class="_drop_text">Kaique Silva</p></li>
+          <hr class="hr-short">
+          <li role="menuitem"><button class="dropdown-item"><i class="bi bi-box-arrow-right"></i>    Sair da conta</button></li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="main-content">
+    <router-outlet></router-outlet>
+  </div>
+</div>

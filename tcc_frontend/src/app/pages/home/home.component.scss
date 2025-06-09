@@ -1,0 +1,7 @@
+@use '../../../styles/variables.scss' as *;
+
+._sidebar {
+  color: $primary-color;
+  font-family: $font-family-base;
+  background-color: $sidebar-color;
+}
