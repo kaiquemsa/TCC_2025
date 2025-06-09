@@ -50,8 +50,8 @@ Ao receber uma consulta do usuário, o sistema busca os documentos mais semelhan
 
 1. Clone o repositório:
    ```bash
-   git clone https://github.com/seuusuario/seuprojeto.git
-   cd seuprojeto/backend
+   git clone
+   cd tcc_2025/tcc_backend
 
 2. Instale as dependências:
    ```bash
