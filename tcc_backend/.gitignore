@@ -44,3 +44,7 @@ Thumbs.db
 # Importants
 .json
 .env
+
+# Ambientes virtuais
+.venv/
+venv/
