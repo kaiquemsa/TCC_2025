@@ -18,7 +18,7 @@ func GenerateEmbeddingLocal(text string) ([]float32, error) {
 
 	// Diretório base do binário
 	baseDir := filepath.Dir(exePath)
-	scriptPath := filepath.Join(baseDir, "python", "embed.py")
+	scriptPath := filepath.Join(baseDir, "app", "python", "embed.py")
 
 	// Se não existir (caso local, go run .), tenta caminho alternativo
 	if _, err := os.Stat(scriptPath); os.IsNotExist(err) {
