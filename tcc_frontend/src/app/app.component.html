@@ -1,3 +1,4 @@
+<!--
 <div class="app-layout d-flex">
   <button class="btn btn-toggle-sidebar btn-outline-light"
       (click)="toggleSidebar()"
@@ -15,21 +16,32 @@
 
     </div>
 
-    <ul class="nav flex-column" *ngIf="isSidebarOpen">
+    <ul class="nav flex-column mb-3" *ngIf="isSidebarOpen">
       <li class="nav-item">
-        <button class="btn _btn" title="Novo chat" [routerLink]="'/'"><i class="bi bi-pencil-square"></i> Novo chat</button>
+        <button class="btn _btn" title="Novo chat" [routerLink]="'/'" (click)="reloadChatHistories()"><i class="bi bi-pencil-square"></i> Novo chat</button>
       </li>
-      <!-- <li class="nav-item">
-        <button class="btn _btn" title="Buscar"><i class="bi bi-search"></i> Buscar</button>
-      </li> -->
+    </ul>
+    <hr class="hr-short">
+    <ul class="nav flex-column mt-4" *ngIf="isSidebarOpen">
+      <p class="nav-item _title">Chats</p>
+      <li class="nav-item" *ngFor="let chat of chats">
+        <button
+          type="button"
+          class="btn _btn"
+          [routerLink]="['/c', chat.id_chat]"
+          (click)="allowChat()"
+        >
+          {{ 'Chat: ' + (chat.last_message_at | date:'dd/MM/yyyy HH:mm') }}
+        </button>
+      </li>
     </ul>
   </div>
 
   <div class="chat-header">
     <div class="chat-actions">
-      <!-- <button (click)="openSettings()" title="Configurações">
+      <button (click)="openSettings()" title="Configurações">
         <i class="bi bi-three-dots-vertical"></i>
-      </button> -->
+      </button>
 
 
       <div class="btn-group" dropdown>
@@ -57,4 +69,8 @@
   <div class="main-content">
     <router-outlet></router-outlet>
   </div>
+</div> -->
+<div class="min-h-screen">
+  <router-outlet></router-outlet>
 </div>
+<app-toaster />

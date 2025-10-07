@@ -1,0 +1,35 @@
+<div class="flex flex-col items-center justify-center min-h-screen bg-app text-app p-6">
+    <div class="w-full max-w-2xl mx-auto space-y-8">
+      <div class="text-center space-y-4">
+        <div class="flex items-center justify-center space-x-2">
+          <svg class="w-8 h-8 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 3l2 4 4 2-4 2-2 4-2-4-4-2 4-2 2-4z"/>
+            <path d="M16 5l1 2 2 1-2 1-1 2-1-2-2-1 2-1 1-2z"/>
+            <path d="M19 14l2 4 4 2-4 2-2 4-2-4-4-2 4-2 2-4z" transform="translate(-8,-2)"/>
+          </svg>
+          <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-600 to-blue-500/70 bg-clip-text text-transparent">Assistant AI</h1>
+        </div>
+        <p class="text-lg font-dark">Your intelligent companion for any task</p>
+      </div>
+      <div class="space-y-4">
+        <div class="relative">
+          <textarea [(ngModel)]="inputValue" (keydown)="onKey($event)" (input)="autoResize($event)"
+            placeholder="Send a message to Assistant AI..." class="input min-h-[120px] text-base resize-none pr-12 py-4" [style.height.px]="height"></textarea>
+          <button (click)="send()" [disabled]="!inputValue.trim()"
+            class="absolute right-3 bottom-3 h-10 w-10 rounded-xl bg-blue-500 text-white hover:bg-blue-600 grid place-items-center" aria-label="Send">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 2 11 13" /><path d="m22 2-7 20-4-9-9-4Z" />
+            </svg>
+          </button>
+        </div>
+        <p class="text-xs text-center font-dark">Press Enter to send, Shift + Enter for new line</p>
+      </div>
+      <div class="space-y-3">
+        <p class="text-sm font-medium text-center">Try asking:</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+          <button class="w-full text-left justify-start h-auto p-3 text-sm rounded-xl border border-default hover:text-app hover:bg-card font-dark"
+              *ngFor="let prompt of examplePrompts" (click)="setPrompt(prompt)">{{ prompt }}</button>
+        </div>
+      </div>
+    </div>
+</div>

@@ -1,9 +1,9 @@
 package api
 
 import (
-	"github.com/kaiquemsa/nlp-sql-backend/app/internal/services"
-
 	"github.com/gofiber/fiber/v2"
+	"github.com/kaiquemsa/nlp-sql-backend/app/internal/services"
+	"github.com/kaiquemsa/nlp-sql-backend/app/types"
 )
 
 type QueryHandler struct {
@@ -18,14 +18,13 @@ func NewQueryHandler(service *services.QueryService) *QueryHandler {
 
 type QueryRequest struct {
 	Question string `json:"question"`
-	History string `json:"history"`
-	Uuid string `json:"uuid"`
+	History  string `json:"history"`
+	Uuid     string `json:"uuid"`
 }
 
 type QueryResponse struct {
-	SQL         string      `json:"sql"`
-	Data        interface{} `json:"data,omitempty"`
-	Explanation string      `json:"explanation"`
+	SQL      string         `json:"sql"`
+	Envelope types.Envelope `json:"envelope"`
 }
 
 func (h *QueryHandler) HandleQuery(c *fiber.Ctx) error {
@@ -36,7 +35,7 @@ func (h *QueryHandler) HandleQuery(c *fiber.Ctx) error {
 		})
 	}
 
-	sql, data, err := h.service.ProcessQuery(req.Question, req.History, req.Uuid)
+	sql, env, err := h.service.ProcessQuery(req.Question, req.History, req.Uuid)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{
 			"error": err.Error(),
@@ -44,8 +43,7 @@ func (h *QueryHandler) HandleQuery(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(QueryResponse{
-		SQL:         sql,
-		Data:        data,
-		Explanation: "Consulta gerada com base na sua pergunta",
+		SQL:      sql,
+		Envelope: env,
 	})
 }

@@ -25,4 +25,9 @@ export class MessagerService {
     const url = environment.URL + '/api/get-history?uuid=' + chat_id;
     return this.http.get(url);
   }
+
+  public getChats(): Observable<any> {
+    const url = environment.URL + '/api/get-chats';
+    return this.http.get(url);
+  }
 }

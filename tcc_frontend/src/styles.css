@@ -1,0 +1,61 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Light tokens */
+:root{
+  --bg: 255 255 255;
+  --fg: 17 24 39;
+  --muted: 107 114 128;
+  --border: 229 231 235;
+  --card: 249 250 251;
+  --primary: 59 130 246; /* blue-500 */
+  --sidebar-bg: 243 244 246;
+  --font-dark: 98 100 102;
+}
+/* Dark tokens */
+:root.dark{
+  --bg: 5 10 24;        /* gray-900 */
+  --fg: 229 231 235;     /* gray-200 */
+  --muted: 248 250 252;  /* gray-400 */
+  --border: 55 65 81;    /* gray-700 */
+  --card: 31 41 55;      /* gray-800 */
+  --primary: 59 130 246; /* keep blue-500 */
+  --sidebar-bg: 30 42 59;
+  --font-dark: 248 250 252;
+}
+
+.bg-sidebar { background-color: rgb(var(--sidebar-bg)); }
+.font-dark { color: rgb(var(--font-dark)); }
+
+.bg-app { background-color: rgb(var(--bg)); }
+.text-app { color: rgb(var(--fg)); }
+.text-muted { color: rgb(var(--font-dark)); }
+/* .border-default { border-color: rgb(var(229 231 235)); } */
+.bg-card { background-color: rgb(var(--card)); }
+
+.btn-primary { @apply bg-blue-500 text-white hover:bg-blue-600; }
+.btn { @apply px-4 py-2 rounded-xl border; border-color: rgb(var(229 231 235)); }
+.icon-btn { @apply p-2 }
+
+.input {
+  @apply w-full border rounded-xl px-4 py-2 focus:outline-none focus:ring-2;
+  border-color: rgb(var(--border));
+  background-color: rgb(var(--bg));
+  color: rgb(var(--fg));
+}
+.search {
+  @apply w-full border rounded-xl px-4 py-2 text-sm;
+  border-color: rgb(var(--border));
+  background-color: rgb(var(--bg));
+  color: rgb(var(--fg));
+}
+
+.toolbar { @apply flex items-center justify-end gap-4; }
+.header-title { @apply text-2xl font-semibold; }
+.header-subtitle { @apply text-sm text-muted; }
+
+.message-bubble { @apply rounded-2xl px-4 py-3 border; border-color: rgb(var(229 231 235)); background-color: rgb(var(--card)); }
+.message-actions { @apply flex gap-6 mt-2 text-sm text-muted; }
+.sidebar-item { @apply w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800; }

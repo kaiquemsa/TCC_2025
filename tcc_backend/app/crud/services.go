@@ -7,6 +7,9 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
+	"strconv"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/kaiquemsa/nlp-sql-backend/app/handlers"
@@ -24,7 +27,7 @@ func SaveChatMessage(supabaseService *supabase.SupabaseService) fiber.Handler {
 			jsonBody, err := json.Marshal(chat)
 			if err != nil {
 				log.Println("Erro ao serializar mensagem:", err)
-				continue 
+				continue
 			}
 
 			req, err := http.NewRequest("POST", supabaseService.Url()+"/rest/v1/chat_history", bytes.NewBuffer(jsonBody))
@@ -58,51 +61,98 @@ func SaveChatMessage(supabaseService *supabase.SupabaseService) fiber.Handler {
 }
 
 func GetHistory(supabaseService *supabase.SupabaseService) fiber.Handler {
-    return func(c *fiber.Ctx) error {
-        uuid := c.Query("uuid")
-        top := c.Query("top")
+	return func(c *fiber.Ctx) error {
+		uuid := c.Query("uuid")
+		top := c.Query("top")
 
-        if uuid == "" {
-            return c.Status(400).JSON(fiber.Map{"error": "uuid não informado"})
-        }
+		if uuid == "" {
+			return c.Status(400).JSON(fiber.Map{"error": "uuid não informado"})
+		}
 
-        body, err := FetchHistory(uuid, supabaseService, top)
-        if err != nil {
-            return c.Status(500).JSON(fiber.Map{"error": "Erro ao buscar histórico"})
-        }
+		body, err := FetchHistory(uuid, supabaseService, top)
+		if err != nil {
+			return c.Status(500).JSON(fiber.Map{"error": "Erro ao buscar histórico"})
+		}
 
-        return c.Status(200).Send(body)
-    }
+		return c.Status(200).Send(body)
+	}
 }
 
 func FetchHistory(uuid string, supabaseService *supabase.SupabaseService, top string) ([]byte, error) {
-    url := fmt.Sprintf("%s/rest/v1/chat_history?id_chat=eq.%s", supabaseService.Url(), uuid)
-    if top != "" {
-        url += fmt.Sprintf("&limit=%s", top)
-    }
-    // Adiciona o order by DESC sempre
-    url += "&order=created_at.desc"
+	url := fmt.Sprintf("%s/rest/v1/chat_history?id_chat=eq.%s", supabaseService.Url(), uuid)
+	if top != "" {
+		url += fmt.Sprintf("&limit=%s", top)
+	}
+	// Adiciona o order by DESC sempre
+	url += "&order=created_at.desc"
 
-    req, err := http.NewRequest("GET", url, nil)
-    if err != nil {
-        return nil, err
-    }
-    req.Header.Set("apikey", supabaseService.Key())
-    req.Header.Set("Authorization", "Bearer "+supabaseService.Key())
-    req.Header.Set("Accept", "application/json")
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("apikey", supabaseService.Key())
+	req.Header.Set("Authorization", "Bearer "+supabaseService.Key())
+	req.Header.Set("Accept", "application/json")
 
-    client := &http.Client{}
-    resp, err := client.Do(req)
-    if err != nil {
-        return nil, err
-    }
-    defer resp.Body.Close()
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
 
-    body, err := io.ReadAll(resp.Body)
-    if err != nil {
-        return nil, err
-    }
-    return body, nil
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	return body, nil
+}
+
+type RecentChat struct {
+	IDChat        string    `json:"id_chat"`
+	LastMessageAt time.Time `json:"last_message_at"`
+}
+
+func GetRecentChats(supabase *supabase.SupabaseService) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		limit := 10
+		if top := c.Query("top"); top != "" {
+			if n, err := strconv.Atoi(top); err == nil && n > 0 {
+				limit = n
+			}
+		}
+
+		v := url.Values{}
+		v.Set("order", "last_message_at.desc")
+		v.Set("limit", strconv.Itoa(limit))
+
+		endpoint := fmt.Sprintf("%s/rest/v1/chat_recent?%s", supabase.Url(), v.Encode())
+
+		req, err := http.NewRequest("GET", endpoint, nil)
+		if err != nil {
+			return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+		}
+		req.Header.Set("apikey", supabase.Key())
+		req.Header.Set("Authorization", "Bearer "+supabase.Key())
+		req.Header.Set("Accept", "application/json")
+
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode >= 400 {
+			b, _ := io.ReadAll(resp.Body)
+			return c.Status(resp.StatusCode).Send(b)
+		}
+
+		var items []RecentChat
+		if err := json.NewDecoder(resp.Body).Decode(&items); err != nil {
+			return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+		}
+		return c.JSON(items)
+	}
 }
 
 func GetEmbeddings(supabaseService *supabase.SupabaseService) fiber.Handler {

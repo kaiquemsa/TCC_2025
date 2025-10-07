@@ -1,0 +1,56 @@
+<div class="flex flex-col h-screen bg-app text-app">
+  <div class="px-8 py-6 border-b border-default flex items-center justify-between">
+    <div><div class="header-title">Assistant AI</div><div class="header-subtitle">AI-powered intelligent assistant</div></div>
+    <div class="flex items-center gap-3 text-sm text-muted">
+      <button class="icon-btn font-dark" (click)="theme.toggle()" [attr.aria-label]="theme.theme()==='dark' ? 'Switch to light theme' : 'Switch to dark theme'">
+        <span *ngIf="theme.theme()==='dark'"><i class="bi bi-sun"></i></span>
+        <span *ngIf="theme.theme()==='light'"><i class="bi bi-moon"></i></span>
+        Tema
+      </button>
+      <button class="icon-btn font-dark" (click)="activeHistory()" [attr.aria-label]="theme.theme()==='dark' ? 'Switch to light theme' : 'Switch to dark theme'">
+        <i class="bi bi-clock-history"></i>
+        Histórico
+        <span *ngIf="isActive">On</span>
+        <span *ngIf="!isActive">Off</span>
+      </button>
+      <div class="flex items-center gap-2 text-sm text-muted">
+        <span class="h-2 w-2 rounded-full bg-green-500 inline-block"></span>
+        <span class="font-dark">Online</span>
+      </div>
+    </div>
+  </div>
+  <div class="flex-1 overflow-y-auto px-4 md:px-8 py-6">
+    <div class="mx-auto max-w-4xl space-y-8">
+      <ng-container *ngFor="let m of service.messages()">
+        <!-- chart -->
+        <app-chart-message *ngIf="isChart(m)" [spec]="m.spec"></app-chart-message>
+
+        <!-- html -->
+        <app-message-bubble *ngIf="isHtml(m)"
+          [id]="m.id" [sender]="m.sender" [timestamp]="m.timestamp"
+          [content]="m.html" [liked]="m.liked">
+        </app-message-bubble>
+
+        <!-- text -->
+        <app-message-bubble *ngIf="isText(m)"
+          [id]="m.id" [sender]="m.sender" [timestamp]="m.timestamp"
+          [content]="m.text" [liked]="m.liked">
+        </app-message-bubble>
+      </ng-container>
+      <app-typing-indicator *ngIf="service.isTyping()"></app-typing-indicator>
+    </div>
+  </div>
+  <div class="px-4 md:px-8 py-4 border-t border-default">
+    <form class="mx-auto max-w-4xl w-full" (ngSubmit)="onSend()" (keydown)="onKey($event)">
+      <div class="relative" style="display: flex; gap: 16px; align-items: end;">
+        <textarea [(ngModel)]="draft" name="draft" rows="2" class="input pr-24"
+          placeholder="Send a message to Assistant AI..." (input)="autoResize($event)"
+          [style.height.px]="composerHeight"></textarea>
+        <button type="submit" class="rounded-xl px-4 py-2 bg-blue-500 text-white hover:bg-blue-600" style="max-height: 45px;">Send</button>
+      </div>
+      <div class="flex items-center justify-between mt-3">
+        <div class="text-xs font-dark">Assistant AI may make mistakes. Please verify important information.</div>
+      </div>
+    </form>
+  </div>
+</div>

@@ -1,0 +1,35 @@
+<aside class="h-screen border-r border-default p-4 bg-sidebar" [class.w-[320px]]="!collapsed()" [class.w-16]="collapsed()">
+    <div class="flex items-center gap-2 mb-3">
+      <button class="icon-btn" (click)="collapsed.set(!collapsed())" title="Toggle menu">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-list" viewBox="0 0 16 16">
+          <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5"/>
+        </svg>
+      </button>
+      <button class="btn btn-primary" (click)="handleNewChat()" [class.w-full]="!collapsed()">
+        <span *ngIf="!collapsed()">+ New Chat</span>
+        <span *ngIf="collapsed()">+</span>
+      </button>
+    </div>
+
+    <div *ngIf="!collapsed()" class="mt-2">
+      <input class="search" placeholder="Search conversations..." />
+    </div>
+
+    <div class="mt-4 space-y-1 overflow-y-auto border-t" [ngClass]="collapsed() ? '' : 'max-h-[calc(100vh-10rem)]'">
+      <ng-container *ngFor="let c of service.chats();  let i = index">
+        <button class="w-full flex items-start gap-3 px-3 py-2 rounded-lg hover:bg-white/70 mt-3" (click)="service.setActiveChat(c.id_chat)">
+          <div class="mt-1">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                  aria-hidden="true">
+              <path d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/>
+            </svg>
+          </div>
+          <div class="min-w-0 d-flex align-items-start flex-column" *ngIf="!collapsed()">
+            <div class="text-sm font-medium truncate">{{ 'Chat ' + (i + 1) }}</div>
+            <div class="text-xs mt-1 font-dark">{{ c.last_message_at | date:'shortTime' }}</div>
+          </div>
+        </button>
+      </ng-container>
+    </div>
+</aside>

@@ -1,12 +1,13 @@
 package services
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
-	"encoding/json"
 
-	"github.com/kaiquemsa/nlp-sql-backend/app/internal/supabase"
 	"github.com/kaiquemsa/nlp-sql-backend/app/crud"
+	"github.com/kaiquemsa/nlp-sql-backend/app/internal/supabase"
+	"github.com/kaiquemsa/nlp-sql-backend/app/types"
 )
 
 type QueryService struct {
@@ -21,24 +22,24 @@ func NewQueryService(gemini *GeminiService, supabase *supabase.SupabaseService) 
 	}
 }
 
-func (s *QueryService) ProcessQuery(question string, history string, uuid string) (string, interface{}, error) {
-	fmt.Println("Args iniciais:", question, history, uuid)	
+func (s *QueryService) ProcessQuery(question string, history string, uuid string) (string, types.Envelope, error) {
+	fmt.Println("Args iniciais:", question, history, uuid)
 	// Caso haja historico
 	var formattedHistory []string
 	if history == "Y" {
 		var top = "6"
 		chatHistory, err := crud.FetchHistory(uuid, s.supabase, top)
 		if err != nil {
-			return "", nil, fmt.Errorf("erro ao buscar histórico: %v", err)
+			return "", types.Envelope{}, fmt.Errorf("erro ao buscar histórico: %v", err)
 		}
-	
+
 		fmt.Println(string(chatHistory))
-	
+
 		var messages []struct {
 			Text string `json:"text"`
 			From string `json:"from"`
 		}
-	
+
 		unmarshalErr := json.Unmarshal([]byte(chatHistory), &messages)
 		if unmarshalErr != nil {
 			var singleMessage struct {
@@ -48,10 +49,10 @@ func (s *QueryService) ProcessQuery(question string, history string, uuid string
 			if err2 := json.Unmarshal([]byte(chatHistory), &singleMessage); err2 == nil {
 				messages = append(messages, singleMessage)
 			} else {
-				return "", nil, fmt.Errorf("erro ao processar histórico: %v", unmarshalErr)
+				return "", types.Envelope{}, fmt.Errorf("erro ao processar histórico: %v", unmarshalErr)
 			}
 		}
-	
+
 		for _, msg := range messages {
 			if msg.Text == "" {
 				continue
@@ -63,7 +64,6 @@ func (s *QueryService) ProcessQuery(question string, history string, uuid string
 			formattedHistory = append(formattedHistory, fmt.Sprintf("%s: %s", from, msg.Text))
 		}
 	}
-	fmt.Println("Mensagem formatada:", formattedHistory)	
 
 	var embedding any
 	var _err error
@@ -71,7 +71,7 @@ func (s *QueryService) ProcessQuery(question string, history string, uuid string
 		// 1.0 Caso haja historico cria uma pergunta com base na pergunta atual e no historico do chat
 		generateQuestion, err := s.gemini.GenerateQuestionByHist(question, formattedHistory)
 		if err != nil {
-			return "", nil, fmt.Errorf("erro ao gerar pergunta: %v", err)
+			return "", types.Envelope{}, fmt.Errorf("erro ao gerar pergunta: %v", err)
 		}
 		fmt.Println(generateQuestion)
 
@@ -84,7 +84,7 @@ func (s *QueryService) ProcessQuery(question string, history string, uuid string
 		// Extrai o conteúdo do "response"
 		var respObj map[string]string
 		if err := json.Unmarshal([]byte(clean), &respObj); err != nil {
-			return "", nil, fmt.Errorf("erro ao extrair response: %v", err)
+			return "", types.Envelope{}, fmt.Errorf("erro ao extrair response: %v", err)
 		}
 
 		questionToEmbedding := respObj["response"]
@@ -93,22 +93,21 @@ func (s *QueryService) ProcessQuery(question string, history string, uuid string
 		// 1.1 Gera embedding com Gemini
 		embedding, _err = s.gemini.GenerateEmbedding(questionToEmbedding)
 		if _err != nil {
-			return "", nil, fmt.Errorf("erro ao gerar embedding: %v", err)
+			return "", types.Envelope{}, fmt.Errorf("erro ao gerar embedding: %v", err)
 		}
 	} else {
 		// 1.1 Gera embedding com Gemini
 		embedding, _err = s.gemini.GenerateEmbedding(question)
 		if _err != nil {
-			return "", nil, fmt.Errorf("erro ao gerar embedding: %v", _err)
+			return "", types.Envelope{}, fmt.Errorf("erro ao gerar embedding: %v", _err)
 		}
-	}	
-	fmt.Println("Embedding:", embedding)
+	}
+
 	// 2. Busca documentos similares
 	docs, err := s.supabase.FindSimilarDocuments(embedding.([]float32))
 	if err != nil {
-		return "", nil, fmt.Errorf("erro ao buscar documentos: %v", err)
+		return "", types.Envelope{}, fmt.Errorf("erro ao buscar documentos: %v", err)
 	}
-	fmt.Printf("documentos encontrados", docs)
 
 	// 3. Prepara contexto
 	var contextDocs []string
@@ -128,15 +127,15 @@ func (s *QueryService) ProcessQuery(question string, history string, uuid string
 	// 4. Gera SQL com Gemini
 	sqlQuery, err := s.gemini.GenerateSQL(question, formattedHistory, contextDocs)
 	if err != nil {
-		return "", nil, fmt.Errorf("erro ao gerar SQL: %v", err)
+		return "", types.Envelope{}, fmt.Errorf("erro ao gerar SQL: %v", err)
 	}
 
 	fmt.Printf("Retorno da geração: %v", sqlQuery)
-	
+
 	// 5. Executa query
 	result, err := s.supabase.ExecuteQuery(sqlQuery)
 	if err != nil {
-		return sqlQuery, nil, fmt.Errorf("erro ao executar query: %v", err)
+		return sqlQuery, types.Envelope{}, fmt.Errorf("erro ao executar query: %v", err)
 	}
 
 	if resultMap, ok := result.(map[string]interface{}); ok {
@@ -145,9 +144,10 @@ func (s *QueryService) ProcessQuery(question string, history string, uuid string
 
 			if msg, ok := resultMap["message"].(string); ok {
 				fmt.Println("Mensagem:", msg)
-				data := msg
-
-				return sqlQuery, data, nil
+				return sqlQuery, types.Envelope{
+					Type: "text",
+					Text: msg,
+				}, nil
 			}
 		}
 	}
@@ -155,12 +155,10 @@ func (s *QueryService) ProcessQuery(question string, history string, uuid string
 	fmt.Printf("Retorno dos itens: %v", result)
 
 	var sb strings.Builder
-
 	items, ok := result.([]map[string]interface{})
 	if !ok {
-		return "", nil, fmt.Errorf("tipo de resultado inesperado: %T", result)
+		return "", types.Envelope{}, fmt.Errorf("tipo de resultado inesperado: %T", result)
 	}
-
 	for _, item := range items {
 		sb.WriteString("- ")
 		primeira := true
@@ -172,16 +170,23 @@ func (s *QueryService) ProcessQuery(question string, history string, uuid string
 			primeira = false
 		}
 		sb.WriteString("\n")
-	}	
-
+	}
 	formattedResult := sb.String()
 	fmt.Printf("formattedResult: %v", formattedResult)
 
-	// 6. Retorna resultado
-	resultIA, err := s.gemini.GenerateResponse(question, formattedResult)
+	env, err := s.gemini.GenerateEnvelope(question, formattedResult)
 	if err != nil {
-		return "", nil, fmt.Errorf("erro ao gerar resposta: %v", err)
+		return sqlQuery, types.Envelope{}, fmt.Errorf("erro ao gerar envelope: %v", err)
 	}
 
-	return sqlQuery, resultIA, nil
+	// sanity check mínimo
+	if env.Type == "" {
+		// fallback: se algo veio vazio, devolve como HTML simples
+		return sqlQuery, types.Envelope{
+			Type: "html",
+			Html: "<p>Não foi possível classificar a resposta. Segue dados:</p><pre>" + formattedResult + "</pre>",
+		}, nil
+	}
+
+	return sqlQuery, env, nil
 }

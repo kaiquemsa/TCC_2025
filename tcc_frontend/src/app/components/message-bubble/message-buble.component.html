@@ -1,0 +1,42 @@
+<div class="w-full">
+    <div class="flex items-center gap-2 text-xs text-muted mb-1 mt-5" [class.justify-end]="sender==='user'">
+      <div class="flex items-center gap-2" *ngIf="sender==='ai'">
+        <div class="w-6 h-6 rounded-full grid place-items-center bg-gray-200 text-[10px] select-none">AI</div>
+        <span class="font-dark font-bold">Assistant AI</span>
+        <span class="font-dark">•</span>
+        <span class="font-dark">{{ timestamp | date:'shortTime' }}</span>
+      </div>
+      <div class="flex items-center gap-2" *ngIf="sender==='user'">
+        <span class="font-dark">{{ timestamp | date:'shortTime' }}</span>
+        <span class="font-dark">•</span>
+        <span class="font-dark font-bold">You</span>
+        <div class="w-6 h-6 rounded-full grid place-items-center bg-blue-600 text-white text-[10px] select-none">U</div>
+      </div>
+    </div>
+
+    <div class="flex" [class.justify-end]="sender==='user'">
+      <div
+        class="rounded-2xl px-4 py-3 border"
+        [ngClass]="sender==='user'
+          ? 'bg-blue-600 text-white border-blue-600 max-w-[680px]'
+          : 'bg-card text-app border-default max-w-[680px]'">
+        <div class="prose max-w-none"
+             [ngClass]="sender==='user' ? 'text-white' : 'font-dark'"
+             [innerHTML]="safeContent">
+        </div>
+      </div>
+    </div>
+
+
+    <div class="flex gap-6 mt-2 mb-5 text-sm text-muted" [class.justify-end]="sender==='user'">
+      <button class="" style="display: flex; gap: 8px" (click)="copy()">
+        <svg class="w-5 h-5 font-dark" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+            aria-hidden="true">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+        </svg>
+        <span class="font-dark">Copiar</span>
+      </button>
+    </div>
+</div>

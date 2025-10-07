@@ -1,0 +1,94 @@
+import { Component, Input, OnChanges, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { NgxEchartsModule } from 'ngx-echarts';
+import type { EChartsOption, SeriesOption } from 'echarts';
+import { ChartSpec } from '../../types/chart';
+import { ThemeService } from '../../shared/theme/theme.service';
+
+@Component({
+  selector: 'app-chart-message',
+  standalone: true,
+  imports: [CommonModule, NgxEchartsModule],
+  template: `
+    <div class="rounded-2xl border border-default p-3 bg-card">
+      <div echarts [options]="option" class="w-full h-[320px]"></div>
+    </div>
+  `,
+})
+export class ChartMessageComponent implements OnChanges {
+  @Input() spec!: ChartSpec;
+  option: EChartsOption = {};
+  private theme = inject(ThemeService);
+
+  ngOnChanges() { this.build(); }
+
+  private build() {
+    const dark = this.theme.theme() === 'dark';
+    const text = dark ? '#e5e7eb' : '#111827';
+    const grid = dark ? '#334155' : '#e5e7eb';
+    const colors = this.spec.colors ?? (dark
+      ? ['#60a5fa','#f472b6','#34d399','#fbbf24']
+      : ['#2563eb','#db2777','#059669','#d97706']);
+
+    let series: SeriesOption[];
+
+    switch (this.spec.kind) {
+      case 'bar':
+        series = this.spec.series.map(s => ({
+          type: 'bar',
+          name: s.name,
+          data: s.values,
+          stack: this.spec.stacked ? 'stack' : undefined,
+        })) as SeriesOption[];
+        break;
+
+      case 'line':
+        series = this.spec.series.map(s => ({
+          type: 'line',
+          name: s.name,
+          data: s.values,
+          smooth: true,
+          areaStyle: {}, // remova se não quiser área
+        })) as SeriesOption[];
+        break;
+
+      case 'pie': {
+        // Para pie, usamos a primeira série (ou combine conforme sua regra)
+        const first = this.spec.series[0] ?? { name: '', values: [] };
+        const pieData = this.spec.x.map((label, i) => ({
+          name: label,
+          value: first.values[i] ?? 0,
+        }));
+        series = [{
+          type: 'pie',
+          name: first.name || this.spec.title,
+          radius: '65%',
+          data: pieData,
+        }] as SeriesOption[];
+        break;
+      }
+    }
+
+    this.option = {
+      backgroundColor: 'transparent',
+      color: colors,
+      textStyle: { color: text },
+      tooltip: { trigger: this.spec.kind === 'pie' ? 'item' : 'axis' },
+      legend: { textStyle: { color: text } },
+      grid: { left: 40, right: 20, top: 40, bottom: 40, containLabel: true },
+      xAxis: this.spec.kind === 'pie' ? undefined : {
+        type: 'category',
+        data: this.spec.x,
+        axisLabel: { color: text },
+        axisLine: { lineStyle: { color: text } },
+      },
+      yAxis: this.spec.kind === 'pie' ? undefined : {
+        type: 'value',
+        name: this.spec.yLabel,
+        axisLabel: { color: text },
+        splitLine: { lineStyle: { color: grid } },
+      },
+      series,
+    };
+  }
+}

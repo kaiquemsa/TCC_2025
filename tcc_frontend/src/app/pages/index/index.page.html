@@ -1,0 +1,11 @@
+<ng-container *ngIf="!chatStarted(); else chat">
+  <app-initial-chat-interface (startChat)="onStart($event)"></app-initial-chat-interface>
+</ng-container>
+<ng-template #chat>
+  <div class="flex h-screen bg-app text-app">
+    <app-chat-sidebar (newChat)="onNewChat()"></app-chat-sidebar>
+    <div class="flex-1">
+      <app-chat-interface [initialMessage]="initialMessage()"></app-chat-interface>
+    </div>
+  </div>
+</ng-template>

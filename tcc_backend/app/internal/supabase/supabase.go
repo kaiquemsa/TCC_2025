@@ -31,12 +31,13 @@ func (s *SupabaseService) Key() string {
 }
 
 type QueryInput struct {
-	SQL    string `json:"sql"`
-	Salute bool   `json:"salute"`
+	SQL      string `json:"sql"`
+	Salute   bool   `json:"salute"`
 	Response string `json:"response"`
 }
 
 func (s *SupabaseService) FindSimilarDocuments(embedding []float32) ([]map[string]interface{}, error) {
+	println("Embedding recebido: ", embedding)
 	if len(embedding) == 0 {
 		return nil, fmt.Errorf("embedding vazio retornado")
 	}
@@ -97,7 +98,7 @@ func (s *SupabaseService) ExecuteQuery(raw string) (interface{}, error) {
 	message := map[string]interface{}{
 		"message": input.Response,
 		"salute":  true,
-	}	
+	}
 
 	if input.Salute || input.SQL == "" {
 		fmt.Println("Salute é true — ignorando execução da query.")

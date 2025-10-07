@@ -11,6 +11,7 @@ func RegisterRoutes(app *fiber.App, queryHandler *QueryHandler, supabaseService 
 	api.Post("/query", queryHandler.HandleQuery)
 	api.Post("/save-chat", crud.SaveChatMessage(supabaseService))
 	api.Get("/get-history", crud.GetHistory(supabaseService))
+	api.Get("/get-chats", crud.GetRecentChats(supabaseService))
 	api.Get("/get-embeddings", crud.GetEmbeddings(supabaseService))
 	api.Put("/update-embedding/:id", crud.UpdateEmbedding(supabaseService))
 	api.Delete("/delete-embedding/:id", crud.DeleteEmbedding(supabaseService))

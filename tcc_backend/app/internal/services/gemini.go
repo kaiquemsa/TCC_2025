@@ -7,8 +7,10 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/kaiquemsa/nlp-sql-backend/app/handlers"
+	"github.com/kaiquemsa/nlp-sql-backend/app/types"
 )
 
 type GeminiRequest struct {
@@ -31,30 +33,40 @@ type GeminiResponse struct {
 }
 
 func GenerateQuestionByHist(question string, history []string) (string, error) {
-	url := "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=" + os.Getenv("GEMINI_API_KEY")
+	url := "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=" + os.Getenv("GEMINI_API_KEY")
 
 	context := ""
 	context = fmt.Sprintf(`
-	Você é um analista de dados responsável por transformar conversas em perguntas claras para busca em banco de dados.  
-	Receba:
-	
-	<QUESTION>
-	"%s"
-	</QUESTION>
-	
-	<HISTORY>
-	"%s"
-	</HISTORY>
-	
-	Com base no histórico (interação entre "me" e "assistant") e na pergunta atual, **elabore uma nova pergunta clara, completa e desambígua**, capaz de ser usada diretamente para buscar informações relevantes no banco de dados (ex: ao invés de "repita a resposta anterior", escreva a pergunta anterior explicitamente).  
-	**Não explique nada, apenas retorne o resultado no formato abaixo:**  
-	
-	<EXAMPLE>
-	{
-	  "response": "Aqui vai a pergunta gerada, pronta para gerar um embedding e buscar no banco"
-	}
-	</EXAMPLE>
-	`, question, history)	
+		<CONTEXTO>
+		Você atua como otimizador de perguntas. Sua função é analisar o histórico de conversas e a última pergunta do usuário para criar uma versão otimizada da pergunta, clara, completa e independente do contexto anterior.
+		</CONTEXTO>
+		
+		<REGRAS>
+		1. A sessão QUESTION contém a última pergunta do usuário.
+		2. A sessão HISTORY contém as últimas interações entre o usuário (me) e o atendente (assistant).
+		3. Seu objetivo é interpretar a pergunta atual levando em conta o histórico, mas dar prioridade ao conteúdo de QUESTION.
+		4. Se a pergunta em QUESTION for ambígua ou depender de contexto do histórico (ex: "E desses, qual foi o último?"), use o HISTORY para completá-la.
+		5. Se o histórico tiver múltiplos assuntos, use apenas o mais recente e relevante.
+		6. O resultado final deve ser uma única pergunta clara e objetiva, que possa ser usada diretamente para consulta em base de dados ou sistemas.
+		7. Nunca responda à pergunta. Seu papel é apenas transformá-la em uma versão otimizada da questão central.
+		</REGRAS>
+		
+		<FORMATACAO>
+		Responda sempre em JSON no formato:
+		{
+			"analise": "(explique passo a passo como interpretou o histórico e a pergunta)",
+			"response": "(aqui a pergunta otimizada, em português claro, completa e independente)"
+		}
+		</FORMATACAO>
+		
+		<QUESTION>
+		"%s"
+		</QUESTION>
+		
+		<HISTORY>
+		"%s"
+		</HISTORY>
+	`, question, history)
 
 	requestData := GeminiRequest{
 		Contents: []struct {
@@ -108,7 +120,7 @@ func GenerateQuestionByHist(question string, history []string) (string, error) {
 }
 
 func GenerateSQL(question string, history []string, contextDocs []string) (string, error) {
-	url := "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=" + os.Getenv("GEMINI_API_KEY")
+	url := "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=" + os.Getenv("GEMINI_API_KEY")
 
 	context := ""
 	context = fmt.Sprintf(`
@@ -121,6 +133,7 @@ func GenerateSQL(question string, history []string, contextDocs []string) (strin
 	Coloque espaço entre as palavras da query SQL montado, não deixe os comandos colados, pois pode dar problemas.
 	Coloque a tabela e a(s) coluna(s) entre aspas sempre.
 	Tenha certeza de que a tabela e colunas indicadas no SQL montado estejam dentro da sessão CONTENT.
+	Lembre-se que o banco de dados é um Postgre, então o SQL criado tem que ser compativel com esse banco.
 	Não crie funções.
 	Não coloque ";" no final da query.
 	Formate a saída da resposta de acordo com a sessão EXEMPLO.
@@ -147,7 +160,7 @@ func GenerateSQL(question string, history []string, contextDocs []string) (strin
 	<EXEMPLO>
 	{
 		"sql": (aqui o resultado do sql),
-		"salute": (aqui se true ou false a depender da sua analise se é uma saudação),
+		"salute": (aqui o boolean se true ou false a depender da sua analise se é uma saudação, nunca string),
 		"response": (aqui caso salute for true, escreva uma resposta de saudação de acordo com a mensagem do usuário e ofereça sua ajuda)
 	}
 	</EXEMPLO>
@@ -184,7 +197,8 @@ func GenerateSQL(question string, history []string, contextDocs []string) (strin
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("erro na requisição, código de status: %d", resp.StatusCode)
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		return "", fmt.Errorf("erro na requisição, código %d, detalhe: %s", resp.StatusCode, string(bodyBytes))
 	}
 
 	bodyBytes, err := io.ReadAll(resp.Body)
@@ -205,7 +219,7 @@ func GenerateSQL(question string, history []string, contextDocs []string) (strin
 }
 
 func GenerateResponse(question string, result string) (string, error) {
-	url := "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=" + os.Getenv("GEMINI_API_KEY")
+	url := "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=" + os.Getenv("GEMINI_API_KEY")
 
 	context := ""
 	context = fmt.Sprintf(`
@@ -214,6 +228,7 @@ func GenerateResponse(question string, result string) (string, error) {
 	O header da tabela montada deve ser de cor escura e as letras claras.
 	Titulos e conteúdos fora da tabela devem ter harmonia em questão de tamanho (h1, h2, h3, h4...), espaçamentos e formatação no geral.
 	No final da resposta apenas diga que está disponivel para qualquer duvida, não "assine" nada.
+	Caso a pergunta do usuario na sessao PERGUNTA seja uma solicitação de gráfico, tabela, comparação, etc, gere isso a ele por meio do HTML.
 	<PERGUNTA>
 	Pergunta do usuário: "%s".
 	</PERGUNTA>
@@ -274,6 +289,117 @@ func GenerateResponse(question string, result string) (string, error) {
 	return gemResp.Candidates[0].Content.Parts[0].Text, nil
 }
 
+func (s *GeminiService) GenerateEnvelope(question string, result string) (types.Envelope, error) {
+	url := "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=" + os.Getenv("GEMINI_API_KEY")
+
+	prompt := fmt.Sprintf(`
+	Você é um assistente de dados. Responda **APENAS** com um JSON válido (sem Markdown, sem crases), no formato:
+
+	{ "type": "text" | "html" | "chart", 
+	"text": "<quando type=text>", 
+	"html": "<quando type=html>", 
+	"spec": { 
+		"kind": "bar|line|pie", 
+		"title": "...", 
+		"x": ["..."], 
+		"series": [ { "name":"...", "values":[<número ou null>] } ], 
+		"yLabel": "...", 
+		"stacked": true|false, 
+		"colors": ["#RRGGBB", ... opcional]
+	} 
+	}
+
+	Regras:
+	- Se **um gráfico** for a melhor saída, retorne { "type":"chart", "spec":{...} }.
+	- Se for apenas texto simples, use { "type":"text", "text":"..."}.
+	- Se precisar formatação rica (lista, tabela), use { "type":"html", "html":"..."} com HTML básico (sem <script>).
+	- NÃO retorne HTML quando "type":"chart".
+	- Use dados de CONTENT para popular x/series do gráfico quando for o caso.
+
+	<PERGUNTA>
+	%s
+	</PERGUNTA>
+
+	<CONTENT>
+	%s
+	</CONTENT>
+	`, question, result)
+
+	req := GeminiRequest{
+		Contents: []struct {
+			Parts []struct {
+				Text string `json:"text"`
+			} `json:"parts"`
+			Role string `json:"role"`
+		}{
+			{
+				Role: "user",
+				Parts: []struct {
+					Text string `json:"text"`
+				}{
+					{Text: prompt},
+				},
+			},
+		},
+	}
+
+	payload, err := json.Marshal(req)
+	if err != nil {
+		return types.Envelope{}, fmt.Errorf("erro ao converter dados para JSON: %v", err)
+	}
+
+	resp, err := http.Post(url, "application/json", bytes.NewBuffer(payload))
+	if err != nil {
+		return types.Envelope{}, fmt.Errorf("erro ao enviar requisição: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		b, _ := io.ReadAll(resp.Body)
+		return types.Envelope{}, fmt.Errorf("status %d: %s", resp.StatusCode, string(b))
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return types.Envelope{}, fmt.Errorf("erro ao ler resposta: %v", err)
+	}
+
+	var gem GeminiResponse
+	if err := json.Unmarshal(body, &gem); err != nil {
+		return types.Envelope{}, fmt.Errorf("erro ao decodificar resposta JSON: %v", err)
+	}
+	if len(gem.Candidates) == 0 || len(gem.Candidates[0].Content.Parts) == 0 {
+		return types.Envelope{}, fmt.Errorf("resposta vazia do modelo")
+	}
+
+	raw := strings.TrimSpace(gem.Candidates[0].Content.Parts[0].Text)
+	// Remove fences se vierem por engano
+	raw = strings.TrimPrefix(raw, "```json")
+	raw = strings.TrimPrefix(raw, "```")
+	raw = strings.TrimSuffix(raw, "```")
+	raw = strings.TrimSpace(raw)
+
+	// Tenta decodificar no envelope
+	var env types.Envelope
+	if err := json.Unmarshal([]byte(raw), &env); err != nil {
+		// fallback: manda como texto
+		return types.Envelope{Type: "text", Text: raw}, nil
+	}
+	// sanity mínimo
+	switch env.Type {
+	case "text", "html", "chart":
+		// ok
+	default:
+		env.Type = "text"
+		if env.Text == "" && env.Html != "" {
+			env.Text = env.Html
+			env.Html = ""
+		}
+	}
+
+	return env, nil
+}
+
 // Serviço Gemini
 type GeminiService struct{}
 
@@ -291,7 +417,6 @@ func (g *GeminiService) GenerateEmbedding(question string) (any, error) {
 
 	return embedding, nil
 }
-
 
 // Função que usa a API Gemini para gerar o SQL
 func (g *GeminiService) GenerateSQL(question string, history []string, contextDocs []string) (string, error) {
