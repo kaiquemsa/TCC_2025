@@ -15,9 +15,8 @@ type Config struct {
 }
 
 func Load() (*Config, error) {
-	if err := godotenv.Load(); err != nil {
-		return nil, fmt.Errorf("erro ao carregar .env: %v", err)
-	}
+	// Tenta carregar o .env, mas ignora erro se não existir
+	_ = godotenv.Load()
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -31,7 +30,11 @@ func Load() (*Config, error) {
 		SupabaseKey: os.Getenv("SUPABASE_ANON_KEY"),
 	}
 
-	return cfg, validateConfig(cfg)
+	if err := validateConfig(cfg); err != nil {
+		return nil, err
+	}
+
+	return cfg, nil
 }
 
 func validateConfig(cfg *Config) error {
