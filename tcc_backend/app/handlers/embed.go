@@ -24,8 +24,8 @@ func GenerateEmbeddingLocal(text string) ([]float32, error) {
 		scriptPath = filepath.Join(".", "python", "embed.py")
 	}
 
-	// Python do venv criado no build
-	venvPython := filepath.Join(baseDir, "app", "python", ".venv", "bin", "python")
+	// Python do venv criado no build (na raiz do app)
+	venvPython := filepath.Join(baseDir, "venv", "bin", "python")
 
 	pythonExe := venvPython
 	if _, err := os.Stat(pythonExe); os.IsNotExist(err) {
