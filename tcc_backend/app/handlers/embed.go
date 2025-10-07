@@ -10,23 +10,30 @@ import (
 )
 
 func GenerateEmbeddingLocal(text string) ([]float32, error) {
-	// Caminho do executável (usado no Render)
+	// caminho do executável Go (binário)
 	exePath, err := os.Executable()
 	if err != nil {
 		return nil, fmt.Errorf("erro ao obter caminho do executável: %v", err)
 	}
-
-	// Diretório base do binário
 	baseDir := filepath.Dir(exePath)
-	scriptPath := filepath.Join(baseDir, "app", "python", "embed.py")
 
-	// Se não existir (caso local, go run .), tenta caminho alternativo
+	// caminho do script
+	scriptPath := filepath.Join(baseDir, "app", "python", "embed.py")
 	if _, err := os.Stat(scriptPath); os.IsNotExist(err) {
-		// Caminho relativo ao projeto local
+		// fallback para execução local (go run a partir do diretório do código)
 		scriptPath = filepath.Join(".", "python", "embed.py")
 	}
 
-	cmd := exec.Command("python3", scriptPath)
+	// Python do venv criado no build
+	venvPython := filepath.Join(baseDir, "app", "python", ".venv", "bin", "python")
+
+	pythonExe := venvPython
+	if _, err := os.Stat(pythonExe); os.IsNotExist(err) {
+		// fallback: python3 do sistema (ex.: ambiente local sem venv)
+		pythonExe = "python3"
+	}
+
+	cmd := exec.Command(pythonExe, scriptPath)
 	cmd.Stdin = bytes.NewBufferString(text)
 
 	output, err := cmd.CombinedOutput()
@@ -38,6 +45,5 @@ func GenerateEmbeddingLocal(text string) ([]float32, error) {
 	if err := json.Unmarshal(output, &embedding); err != nil {
 		return nil, fmt.Errorf("erro ao parsear o resultado do Python: %v", err)
 	}
-
 	return embedding, nil
 }
