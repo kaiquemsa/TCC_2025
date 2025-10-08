@@ -24,14 +24,34 @@ func GenerateEmbeddingLocal(text string) ([]float32, error) {
 		scriptPath = filepath.Join(".", "python", "embed.py")
 	}
 
-	// Python do venv criado no build (na raiz do app)
-	venvPython := filepath.Join(baseDir, "venv", "bin", "python")
+	// // Python do venv criado no build (na raiz do app)
+	// venvPython := filepath.Join(baseDir, "venv", "bin", "python")
 
-	pythonExe := venvPython
-	if _, err := os.Stat(pythonExe); os.IsNotExist(err) {
-		// fallback: python3 do sistema (ex.: ambiente local sem venv)
-		pythonExe = "python3"
+	// pythonExe := venvPython
+	// if _, err := os.Stat(pythonExe); os.IsNotExist(err) {
+	// 	// fallback: python3 do sistema (ex.: ambiente local sem venv)
+	// 	pythonExe = "python3"
+	// }
+
+	// Caminhos possíveis para o Python
+	possiblePaths := []string{
+		"/app/venv/bin/python",                                            // Railway runtime
+		filepath.Join(baseDir, "venv", "bin", "python"),                   // Local build
+		filepath.Join(baseDir, "app", "python", ".venv", "bin", "python"), // antigo
 	}
+
+	var pythonExe string
+	for _, path := range possiblePaths {
+		if _, err := os.Stat(path); err == nil {
+			pythonExe = path
+			break
+		}
+	}
+
+	if pythonExe == "" {
+		pythonExe = "python3" // fallback local
+	}
+	fmt.Println("Usando Python em:", pythonExe)
 
 	cmd := exec.Command(pythonExe, scriptPath)
 	cmd.Stdin = bytes.NewBufferString(text)
