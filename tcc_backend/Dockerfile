@@ -23,7 +23,7 @@ ENV TRANSFORMERS_OFFLINE=1
 ENV HF_HUB_DISABLE_TELEMETRY=1
 
 # ===== Etapa 2: Build do Go =====
-FROM golang:1.22-bullseye AS builder
+FROM golang:1.23-bullseye AS builder
 
 WORKDIR /app
 COPY . .
@@ -37,6 +37,7 @@ FROM debian:bookworm-slim
 
 # Pasta de trabalho
 WORKDIR /app
+ENV GOTOOLCHAIN=go1.23.0
 
 # Copia o binário Go e o ambiente Python completo
 COPY --from=builder /app/server /app/server
