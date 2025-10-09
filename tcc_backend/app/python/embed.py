@@ -24,8 +24,21 @@ def generate_embedding(text: str):
     return [0.0 if (not isinstance(x, float) or math.isnan(x) or math.isinf(x)) else x for x in emb]
 
 if __name__ == "__main__":
+    import warnings
+    warnings.filterwarnings("ignore")
+
+    # Redireciona stderr pra /dev/null pra evitar logs do torch/transformers
+    sys.stderr = open(os.devnull, "w")
+
     text = sys.stdin.read().strip()
     if not text:
-        print("[]")
+        print("[]", flush=True)
         sys.exit(0)
-    print(json.dumps(generate_embedding(text)))
+
+    try:
+        result = generate_embedding(text)
+        print(json.dumps(result), flush=True)
+    except Exception as e:
+        # Em caso de erro, retorna um JSON válido pra evitar crash no Go
+        print(json.dumps([]), flush=True)
+        sys.exit(1)
