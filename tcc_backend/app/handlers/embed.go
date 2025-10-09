@@ -63,6 +63,8 @@ func GenerateEmbeddingLocal(text string) ([]float32, error) {
 	if err != nil {
 		return nil, fmt.Errorf("erro ao executar embed.py: %v\nSaída: %s", err, string(output))
 	}
+	fmt.Println("🧩 Saída bruta do Python:")
+	fmt.Println(string(output))
 
 	var embedding []float32
 	if err := json.Unmarshal(output, &embedding); err != nil {

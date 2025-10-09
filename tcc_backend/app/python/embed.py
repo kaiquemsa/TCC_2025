@@ -25,9 +25,10 @@ def generate_embedding(text: str):
 
 if __name__ == "__main__":
     import warnings
+    import sys
     warnings.filterwarnings("ignore")
 
-    # Redireciona stderr pra /dev/null pra evitar logs do torch/transformers
+    # silencia tudo o que não for print() direto (inclusive transformers)
     sys.stderr = open(os.devnull, "w")
 
     text = sys.stdin.read().strip()
@@ -37,8 +38,11 @@ if __name__ == "__main__":
 
     try:
         result = generate_embedding(text)
+        sys.stdout.reconfigure(encoding='utf-8')
         print(json.dumps(result), flush=True)
     except Exception as e:
-        # Em caso de erro, retorna um JSON válido pra evitar crash no Go
-        print(json.dumps([]), flush=True)
+        # imprime erro apenas no stderr (não contamina stdout)
+        print(f"Erro interno: {e}", file=sys.stderr)
+        print("[]", flush=True)
         sys.exit(1)
+
