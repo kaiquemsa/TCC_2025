@@ -33,11 +33,12 @@ func GenerateEmbeddingLocal(text string) ([]float32, error) {
 	// 	pythonExe = "python3"
 	// }
 
-	// Caminhos possíveis para o Python
+	// tenta achar o Python em vários locais possíveis
 	possiblePaths := []string{
-		"/app/venv/bin/python",                                            // Railway runtime
-		filepath.Join(baseDir, "venv", "bin", "python"),                   // Local build
-		filepath.Join(baseDir, "app", "python", ".venv", "bin", "python"), // antigo
+		"/app/venv/bin/python",                                            // runtime Railway
+		filepath.Join(baseDir, "..", "venv", "bin", "python"),             // sobe um nível (quando binário está em /app/tcc_backend)
+		filepath.Join(baseDir, "venv", "bin", "python"),                   // local build
+		filepath.Join(baseDir, "app", "python", ".venv", "bin", "python"), // estrutura antiga
 	}
 
 	var pythonExe string
@@ -48,10 +49,12 @@ func GenerateEmbeddingLocal(text string) ([]float32, error) {
 		}
 	}
 
+	// debug pra ver qual caminho foi pego
+	fmt.Println("🔍 Usando Python em:", pythonExe)
+
 	if pythonExe == "" {
-		pythonExe = "python3" // fallback local
+		pythonExe = "python3"
 	}
-	fmt.Println("Usando Python em:", pythonExe)
 
 	cmd := exec.Command(pythonExe, scriptPath)
 	cmd.Stdin = bytes.NewBufferString(text)
