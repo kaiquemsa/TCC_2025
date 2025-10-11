@@ -1,42 +1,68 @@
 <div class="w-full">
-    <div class="flex items-center gap-2 text-xs text-muted mb-1 mt-5" [class.justify-end]="sender==='user'">
-      <div class="flex items-center gap-2" *ngIf="sender==='ai'">
-        <div class="w-6 h-6 rounded-full grid place-items-center bg-gray-200 text-[10px] select-none">AI</div>
-        <span class="font-dark font-bold">Assistant AI</span>
-        <span class="font-dark">•</span>
-        <span class="font-dark">{{ timestamp | date:'shortTime' }}</span>
-      </div>
-      <div class="flex items-center gap-2" *ngIf="sender==='user'">
-        <span class="font-dark">{{ timestamp | date:'shortTime' }}</span>
-        <span class="font-dark">•</span>
-        <span class="font-dark font-bold">You</span>
-        <div class="w-6 h-6 rounded-full grid place-items-center bg-blue-600 text-white text-[10px] select-none">U</div>
+  <!-- Cabeçalho (nome, hora, etc) -->
+  <div class="flex items-center gap-2 text-xs text-muted mb-1 mt-5" [class.justify-end]="sender==='user'">
+    <div class="flex items-center gap-2" *ngIf="sender==='ai'">
+      <div class="w-6 h-6 rounded-full grid place-items-center bg-gray-200 text-[10px] select-none">AI</div>
+      <span class="font-dark font-bold">Assistant AI</span>
+      <span class="font-dark">•</span>
+      <span class="font-dark">{{ timestamp | date:'shortTime' }}</span>
+    </div>
+    <div class="flex items-center gap-2" *ngIf="sender==='user'">
+      <span class="font-dark">{{ timestamp | date:'shortTime' }}</span>
+      <span class="font-dark">•</span>
+      <span class="font-dark font-bold">You</span>
+      <div class="w-6 h-6 rounded-full grid place-items-center bg-blue-600 text-white text-[10px] select-none">U</div>
+    </div>
+  </div>
+
+  <!-- Conteúdo da mensagem -->
+  <div class="flex" [class.justify-end]="sender==='user'">
+    <div
+      class="rounded-2xl px-4 py-3 border"
+      [ngClass]="sender==='user'
+        ? 'bg-blue-600 text-white border-blue-600 max-w-[680px]'
+        : 'bg-card text-app border-default max-w-[680px]'">
+
+      <div class="prose max-w-none"
+           #bubbleContent
+           [ngClass]="sender==='user' ? 'text-white' : 'font-dark'"
+           [innerHTML]="safeContent">
       </div>
     </div>
+  </div>
 
-    <div class="flex" [class.justify-end]="sender==='user'">
-      <div
-        class="rounded-2xl px-4 py-3 border"
-        [ngClass]="sender==='user'
-          ? 'bg-blue-600 text-white border-blue-600 max-w-[680px]'
-          : 'bg-card text-app border-default max-w-[680px]'">
-        <div class="prose max-w-none"
-             [ngClass]="sender==='user' ? 'text-white' : 'font-dark'"
-             [innerHTML]="safeContent">
-        </div>
-      </div>
-    </div>
+  <!-- Rodapé de ações -->
+  <div class="flex gap-6 mt-2 mb-5 text-sm text-muted" [class.justify-end]="sender==='user'">
+    <!-- Botão copiar (para todos) -->
+    <button style="display: flex; gap: 4px" (click)="copy()">
+      <svg class="w-5 h-5 font-dark" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+          aria-hidden="true">
+        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+      </svg>
+      <span class="font-dark">Copiar</span>
+    </button>
 
-
-    <div class="flex gap-6 mt-2 mb-5 text-sm text-muted" [class.justify-end]="sender==='user'">
-      <button class="" style="display: flex; gap: 8px" (click)="copy()">
+    <!-- ✅ Exportações (somente se IA e tiver tabela) -->
+    <ng-container *ngIf="sender==='ai' && hasTable">
+      <button style="display: flex; gap: 4px" (click)="exportTableImage()">
         <svg class="w-5 h-5 font-dark" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
-            aria-hidden="true">
-          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            xmlns="http://www.w3.org/2000/svg">
+          <path d="M14.2647 15.9377L12.5473 14.2346C11.758 13.4519 11.3633 13.0605 10.9089 12.9137C10.5092 12.7845 10.079 12.7845 9.67922 12.9137C9.22485 13.0605 8.83017 13.4519 8.04082 14.2346L4.04193 18.2622M14.2647 15.9377L14.606 15.5991C15.412 14.7999 15.8149 14.4003 16.2773 14.2545C16.6839 14.1262 17.1208 14.1312 17.5244 14.2688C17.9832 14.4253 18.3769 14.834 19.1642 15.6515L20 16.5001M14.2647 15.9377L18.22 19.9628M11 4H7.2C6.07989 4 5.51984 4 5.09202 4.21799C4.7157 4.40973 4.40973 4.71569 4.21799 5.09202C4 5.51984 4 6.0799 4 7.2V16.8C4 17.4466 4 17.9066 4.04193 18.2622M4.04193 18.2622C4.07264 18.5226 4.12583 18.7271 4.21799 18.908C4.40973 19.2843 4.7157 19.5903 5.09202 19.782C5.51984 20 6.07989 20 7.2 20H16.8C17.9201 20 18.4802 20 18.908 19.782C19.2843 19.5903 19.5903 19.2843 19.782 18.908C20 18.4802 20 17.9201 20 16.8V13M15 5.28571L16.8 7L21 3"/>
         </svg>
-        <span class="font-dark">Copiar</span>
+        <span class="font-dark">Exportar imagem</span>
       </button>
-    </div>
+
+      <button style="display: flex; gap: 4px" (click)="exportTableXlsx()">
+        <svg class="w-5 h-5 font-dark" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 4h16v16H4z"></path>
+          <path d="M4 9h16M9 4v16"></path>
+        </svg>
+        <span class="font-dark">Exportar Excel</span>
+      </button>
+    </ng-container>
+  </div>
 </div>

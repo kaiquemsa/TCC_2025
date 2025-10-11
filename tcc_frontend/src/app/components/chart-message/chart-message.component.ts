@@ -1,24 +1,46 @@
-import { Component, Input, OnChanges, inject } from '@angular/core';
+import { Component, Input, OnChanges, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { NgxEchartsModule } from 'ngx-echarts';
-import type { EChartsOption, SeriesOption } from 'echarts';
+import { NgxEchartsDirective, NgxEchartsModule } from 'ngx-echarts';
+import type { ECharts, EChartsOption, SeriesOption } from 'echarts';
 import { ChartSpec } from '../../types/chart';
 import { ThemeService } from '../../shared/theme/theme.service';
+import * as XLSX from 'xlsx';
 
 @Component({
   selector: 'app-chart-message',
   standalone: true,
-  imports: [CommonModule, NgxEchartsModule],
+  imports: [CommonModule, NgxEchartsModule, NgxEchartsDirective],
   template: `
-    <div class="rounded-2xl border border-default p-3 bg-card">
-      <div echarts [options]="option" class="w-full h-[320px]"></div>
+    <div class="relative w-full">
+      <div #chart echarts [options]="option" class="w-full h-80 rounded-xl border border-default"></div>
+
+      <div class="absolute top-2 right-2 flex gap-2">
+        <button class="btn-export" (click)="exportAsImage()">📸</button>
+        <button class="btn-export" (click)="exportAsXlsx()">📊</button>
+      </div>
     </div>
   `,
+  styles: [`
+    .btn-export {
+      background: rgba(255, 255, 255, 0.85);
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      padding: 4px 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn-export:hover { background: #f3f4f6; }
+  `]
 })
 export class ChartMessageComponent implements OnChanges {
   @Input() spec!: ChartSpec;
   option: EChartsOption = {};
+  private chartInstance: ECharts | null = null;
   private theme = inject(ThemeService);
+
+  onChartInit(chart: ECharts) {
+    this.chartInstance = chart;
+  }
 
   ngOnChanges() { this.build(); }
 
@@ -91,4 +113,30 @@ export class ChartMessageComponent implements OnChanges {
       series,
     };
   }
+
+
+  exportAsImage() {
+    if (!this.chartInstance) return;
+    const dataUrl = this.chartInstance.getDataURL({ type: 'png', backgroundColor: '#fff' });
+    const link = document.createElement('a');
+    link.href = dataUrl;
+    link.download = `${this.spec.title || 'grafico'}.png`;
+    link.click();
+  }
+
+  exportAsXlsx() {
+    if (!this.spec?.series?.length) return;
+
+    const data = this.spec.x.map((label, i) => {
+      const row: any = { Label: label };
+      this.spec.series.forEach(s => row[s.name] = s.values[i] ?? null);
+      return row;
+    });
+
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Gráfico');
+    XLSX.writeFile(wb, `${this.spec.title || 'grafico'}.xlsx`);
+  }
+
 }

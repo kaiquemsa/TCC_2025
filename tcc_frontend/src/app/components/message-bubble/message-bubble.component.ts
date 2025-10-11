@@ -1,8 +1,9 @@
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, ElementRef, Input, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ToastService } from '../../shared/toast/toast.service';
 import { ChatService } from '../../services/chat.service';
 import { CommonModule } from '@angular/common';
+import * as XLSX from 'xlsx';
 
 @Component({
   selector: 'app-message-bubble',
@@ -21,6 +22,7 @@ export class MessageBubbleComponent implements OnChanges {
   @Input() timestamp: Date = new Date();
   @Input() id = '';
   @Input() liked: boolean | null | undefined = null;
+  @ViewChild('bubbleContent') contentRef!: ElementRef;
 
   @Input() set content(value: string) {
     this.rawContent = value ?? '';
@@ -28,25 +30,23 @@ export class MessageBubbleComponent implements OnChanges {
   }
   rawContent = '';
   safeContent: SafeHtml = '';
+  hasTable = false;
 
   ngOnChanges(_: SimpleChanges) {
     this.updateSafeContent();
   }
 
+  ngAfterViewInit() {
+    setTimeout(() => {
+      this.hasTable = !!this.contentRef?.nativeElement.querySelector('table');
+    });
+  }
+
   private updateSafeContent() {
     const v = this.rawContent ?? '';
-
-    // ✅ Opção A (recomendada): manter sanitização do Angular para TODO mundo
-    // Basta NÃO usar bypass e, no template, usar [innerHTML]="rawContent"
-    // this.safeContent = v; // (se você quiser essa opção, troque no template)
-
-    // ✅ Opção B (quando o HTML é CONFIÁVEL — ex.: você gera o HTML do assistente)
-    // Use bypass apenas nesses casos. Se preferir, aplique só para 'ai'.
-    if (this.sender === 'ai') {
-      this.safeContent = this.sanitizer.bypassSecurityTrustHtml(v);
-    } else {
-      this.safeContent = v;
-    }
+    this.safeContent = this.sender === 'ai'
+      ? this.sanitizer.bypassSecurityTrustHtml(v)
+      : v;
   }
 
   async copy() {
@@ -56,5 +56,23 @@ export class MessageBubbleComponent implements OnChanges {
     } catch {
       this.toast.show('Copy failed');
     }
+  }
+
+  async exportTableImage() {
+    const html2canvas = (await import('html2canvas')).default;
+    const table = this.contentRef.nativeElement.querySelector('table');
+    if (!table) return;
+    const canvas = await html2canvas(table);
+    const link = document.createElement('a');
+    link.href = canvas.toDataURL('image/png');
+    link.download = 'tabela.png';
+    link.click();
+  }
+
+  exportTableXlsx() {
+    const table = this.contentRef.nativeElement.querySelector('table');
+    if (!table) return;
+    const wb = XLSX.utils.table_to_book(table);
+    XLSX.writeFile(wb, 'tabela.xlsx');
   }
 }
