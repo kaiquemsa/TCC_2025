@@ -10,30 +10,14 @@ import * as XLSX from 'xlsx';
   selector: 'app-chart-message',
   standalone: true,
   imports: [CommonModule, NgxEchartsModule, NgxEchartsDirective],
-  template: `
-    <div class="relative w-full">
-      <div #chart echarts [options]="option" class="w-full h-80 rounded-xl border border-default"></div>
-
-      <div class="absolute top-2 right-2 flex gap-2">
-        <button class="btn-export" (click)="exportAsImage()">📸</button>
-        <button class="btn-export" (click)="exportAsXlsx()">📊</button>
-      </div>
-    </div>
-  `,
+  templateUrl: './chart-message.component.html',
   styles: [`
-    .btn-export {
-      background: rgba(255, 255, 255, 0.85);
-      border: 1px solid #d1d5db;
-      border-radius: 6px;
-      padding: 4px 8px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-    .btn-export:hover { background: #f3f4f6; }
+    .font-dark { color: #111827; }
   `]
 })
 export class ChartMessageComponent implements OnChanges {
   @Input() spec!: ChartSpec;
+  @Input() timestamp: Date = new Date();
   option: EChartsOption = {};
   private chartInstance: ECharts | null = null;
   private theme = inject(ThemeService);
