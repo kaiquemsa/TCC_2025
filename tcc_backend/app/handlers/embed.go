@@ -24,15 +24,6 @@ func GenerateEmbeddingLocal(text string) ([]float32, error) {
 		scriptPath = filepath.Join(".", "python", "embed.py")
 	}
 
-	// // Python do venv criado no build (na raiz do app)
-	// venvPython := filepath.Join(baseDir, "venv", "bin", "python")
-
-	// pythonExe := venvPython
-	// if _, err := os.Stat(pythonExe); os.IsNotExist(err) {
-	// 	// fallback: python3 do sistema (ex.: ambiente local sem venv)
-	// 	pythonExe = "python3"
-	// }
-
 	// tenta achar o Python em vários locais possíveis
 	possiblePaths := []string{
 		"/app/venv/bin/python",                                            // runtime Railway
@@ -48,9 +39,6 @@ func GenerateEmbeddingLocal(text string) ([]float32, error) {
 			break
 		}
 	}
-
-	// debug pra ver qual caminho foi pego
-	fmt.Println("🔍 Usando Python em:", pythonExe)
 
 	if pythonExe == "" {
 		pythonExe = "python3"

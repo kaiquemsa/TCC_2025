@@ -156,6 +156,11 @@ func GenerateSQL(question string, history []string, contextDocs []string) (strin
 	sku: [id: int8, sku_number: text, codigo_pais: text, descricao: text, quantidade_de_itens_pallet_saida: int8, cd_status: int8]
 	grupo_usuarios: [id: int8, nome_do_grupo: text, cd_status: int8]
 	usuarios: [id: int8, username: text, nome: text, conta_habilitada: bytea, grupo_de_usuario_id: int8]
+	parada_linha: [id: int8, dt_start: timestamptz, dt_end: timestamptz, validate: int2, description: text]
+	efeitos: [id: int8, descricao: text, tipo_de_parada: text]
+	scraps: [id: int8, dt_created: timestamptz, production_order: int8, quantity: int8]
+	setup: [id: int8, dt_start: timestamptz, dt_end: timestamptz, station: text]
+	tarefa: [id: int8, name: text, station: text]
 	</TABLE>
 	<EXEMPLO>
 	{

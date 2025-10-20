@@ -317,44 +317,62 @@ func GenerateEmbeddingsFromStruct(supabaseService *supabase.SupabaseService) fib
 
 		// Passo 2: Iterar sobre os registros e gerar embeddings
 		for _, row := range rows {
-			id := row["id"]
+			// Extrair campos
+			idVal, ok := row["id"]
+			if !ok {
+				log.Println("Registro sem ID, ignorando...")
+				continue
+			}
+
+			// Corrigir tipo do ID (pode vir como float64 do JSON)
+			var id string
+			switch v := idVal.(type) {
+			case float64:
+				id = strconv.FormatInt(int64(v), 10)
+			case string:
+				id = v
+			default:
+				log.Printf("Tipo inesperado para ID: %T\n", v)
+				continue
+			}
+
 			tabela := row["table_name"]
 			coluna := row["column_name"]
 			descricao := row["description"]
 
-			text := fmt.Sprintf("Tabela %s, coluna %s: %s", tabela, coluna, descricao)
+			text := fmt.Sprintf("Tabela %v, coluna %v: %v", tabela, coluna, descricao)
 
-			embedding, err := handlers.GenerateEmbeddingHF(text)
+			embedding, err := handlers.GenerateEmbeddingLocal(text)
 			if err != nil {
-				log.Println("Erro no embedding:", err)
+				log.Println("Erro ao gerar embedding:", err)
 				continue
 			}
 
-			// Passo 3: Atualizar o registro com PATCH
-			payload := []map[string]interface{}{
-				{
-					"id":        id,
-					"embedding": embedding,
-				},
+			// Passo 3: Atualizar o registro com PATCH (usando WHERE id)
+			url := fmt.Sprintf("%s/rest/v1/struct?id=eq.%s", supabaseService.Url(), id)
+
+			payload := map[string]interface{}{
+				"embedding": embedding,
 			}
 			jsonPayload, _ := json.Marshal(payload)
 
-			patchReq, _ := http.NewRequest("PATCH", supabaseService.Url()+"/rest/v1/struct", bytes.NewBuffer(jsonPayload))
+			patchReq, _ := http.NewRequest("PATCH", url, bytes.NewBuffer(jsonPayload))
 			patchReq.Header.Set("apikey", supabaseService.Key())
 			patchReq.Header.Set("Authorization", "Bearer "+supabaseService.Key())
 			patchReq.Header.Set("Content-Type", "application/json")
-			patchReq.Header.Set("Prefer", "resolution=merge-duplicates") // importante para PATCH em Supabase
 
 			patchResp, err := client.Do(patchReq)
 			if err != nil {
-				log.Println("Erro no PATCH:", err)
+				log.Printf("Erro no PATCH para ID %s: %v\n", id, err)
 				continue
 			}
 			defer patchResp.Body.Close()
 
 			if patchResp.StatusCode >= 300 {
 				respErr, _ := io.ReadAll(patchResp.Body)
-				log.Printf("Erro ao atualizar ID %v: %s", id, string(respErr))
+				log.Printf("Erro ao atualizar ID %s: %s\n", id, string(respErr))
+			} else {
+				log.Printf("Embedding atualizado com sucesso para ID %s\n", id)
 			}
 		}
 
